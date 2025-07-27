@@ -4,7 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Juego: Adivina el número</title>
-  <link rel="stylesheet" href="style.css">
+  <style>
+    body { font-family: sans-serif; padding: 2rem; background: #f4f4f4; }
+    input, button { margin: 0.5rem 0; padding: 0.5rem; }
+    #resultado, #mensajeGuardado { margin-top: 1rem; font-weight: bold; }
+  </style>
 </head>
 <body>
   <h1>¡Adivina el número del 1 al 100!</h1>
@@ -13,6 +17,79 @@
   <button onclick="comprobar()">Comprobar</button>
   <p id="resultado"></p>
 
-  <script src="script.js"></script>
+  <hr>
+  <h2>Guardar tu partida</h2>
+  <label for="nombre">Tu nombre:</label>
+  <input type="text" id="nombre" />
+
+  <button id="guardar">Guardar partida</button>
+  <p id="mensajeGuardado"></p>
+
+  <script>
+    // ---------- LÓGICA DEL JUEGO ----------
+    const numeroSecreto = Math.floor(Math.random() * 100) + 1;
+    let intentos = 10;
+
+    function comprobar() {
+      const entrada = parseInt(document.getElementById('entrada').value);
+      const resultado = document.getElementById('resultado');
+
+      if (isNaN(entrada) || entrada < 1 || entrada > 100) {
+        resultado.textContent = 'Introduce un número válido entre 1 y 100.';
+        return;
+      }
+
+      if (intentos <= 0) {
+        resultado.textContent = '😢 ¡Te has quedado sin intentos!';
+        return;
+      }
+
+      intentos--;
+      document.getElementById('intentos').textContent = intentos;
+
+      if (entrada === numeroSecreto) {
+        resultado.textContent = '🎉 ¡Correcto! ¡Has adivinado el número!';
+      } else if (entrada < numeroSecreto) {
+        resultado.textContent = '📉 Demasiado bajo.';
+      } else {
+        resultado.textContent = '📈 Demasiado alto.';
+      }
+
+      if (intentos === 0 && entrada !== numeroSecreto) {
+        resultado.textContent += ' El número era ' + numeroSecreto + '.';
+      }
+    }
+
+    // ---------- CONEXIÓN CON LA API ----------
+    document.getElementById('guardar').addEventListener('click', () => {
+      const nombre = document.getElementById('nombre').value;
+      const intentosRestantes = parseInt(document.getElementById('intentos').textContent);
+      const intentosUsados = 10 - intentosRestantes;
+
+      if (!nombre || isNaN(intentosUsados)) {
+        document.getElementById('mensajeGuardado').textContent = 'Pon un nombre válido y juega al menos una vez.';
+        return;
+      }
+
+      fetch('adivina-el-numero-production.up.railway.app', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jugador: nombre,
+          intentos: intentosUsados
+        })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Error al guardar');
+        return res.json();
+      })
+      .then(data => {
+        document.getElementById('mensajeGuardado').textContent = `✅ Partida guardada con ID ${data.id}`;
+      })
+      .catch(err => {
+        document.getElementById('mensajeGuardado').textContent = `❌ Error: ${err.message}`;
+      });
+    });
+  </script>
 </body>
 </html>

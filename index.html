@@ -71,7 +71,7 @@
         return;
       }
 
-      fetch('api-partidas-production.up.railway.app', {
+      fetch('https://api-partidas-production.up.railway.app/api/partidas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
